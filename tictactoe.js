@@ -5,28 +5,39 @@ class TicTacToe {
     this.player1 = player1;
     this.player2 = player2;
     this.board = [['_','_','_'],['_','_','_'],['_','_','_']];
+    this.winCondition = 'It\'s a tie!';
   };
   showBoard() {
     this.board.forEach(row => {
       console.log(row.join('|'));
-      // console.log('-----');
     });
   };
   startMove(player) { // [1,2] // first row, second square
     console.log(player + '\'s turn to place');
-    prompt.get(['row', 'col'], (err, results) => {
+    prompt.get([{
+      name: 'row',
+      required: true,
+      pattern: /^[1-3]$/,
+      message: 'Row number must be between 1 and 3'
+    }, {
+      name: 'col',
+      required: true,
+      pattern: /^[1-3]$/,
+      message: 'Column number must be between 1 and 3'
+    }], (err, results) => {
       console.log('Row: ' + results.row);
       console.log('Column: ' + results.col);
-      this.board[+results.row - 1][+results.col - 1] = player;
-      this.showBoard();
-      if (this.checkBoard()) {
-        console.log(this.winCondition);
-        return;
+      if (this.board[+results.row - 1][+results.col - 1] !== '_') {
+        console.log('INVALID MOVE');
+        this.startMove(player);
       } else {
-        if (player === this.player1) {
-          this.startMove(this.player2);
+        this.board[+results.row - 1][+results.col - 1] = player;
+        this.showBoard();
+        if (this.checkBoard()) {
+          console.log(this.winCondition);
+          return;
         } else {
-          this.startMove(this.player1);
+          player === this.player1 ? this.startMove(this.player2) : this.startMove(this.player1);
         }
       }
     });
@@ -57,10 +68,20 @@ class TicTacToe {
     });
     return this.checkThree(...arr);
   }
+  checkAllSquares() {
+    let fill = true;
+    for (let i = 0; i < this.board.length; i++) {
+      for (let j = 0; j < this.board.length; j++) {
+        if (this.board[i][j] === '_') {
+          fill = false;
+        }
+      }
+    }
+    return fill;
+  }
   checkBoard() {
     for (let i = 0; i < this.board.length; i++) {
       if (this.checkThree(...this.board[i])) {
-        // this.winner = this.board[i][0];
         this.winCondition = this.board[i][0] + ' wins!\nHorizontal row ' + (i + 1);
         return true;
       }
@@ -68,38 +89,39 @@ class TicTacToe {
         this.winCondition = this.getColumns(i)[0] + ' wins!\nVertical col ' + (i + 1);
         return true;
       }
-      if (this.checkMajorDiag()) {
-        this.winCondition = this.board[0][0] + ' wins!\nMajor Diag';
-        return true;
-      }
-      if (this.checkMinorDiag()) {
-        this.winCondition = this.board[0][2] + ' wins!\nMinor Diag';
-        return true;
-      }
+    }
+    if (this.checkMajorDiag()) {
+      this.winCondition = this.board[0][0] + ' wins!\nMajor Diag';
+      return true;
+    }
+    if (this.checkMinorDiag()) {
+      this.winCondition = this.board[0][2] + ' wins!\nMinor Diag';
+      return true;
+    }
+    if (this.checkAllSquares()) {
+      return true;
     }
     return false;
   }
 };
 
 prompt.start();
-prompt.get(['player1', 'player2'], (err, results) => {
-  console.log('player 1: ' + results.player1);
-  console.log('player 2: ' + results.player2);
+let playerSchema = {
+  properties: {
+    player1: {
+      pattern: /^\S$/,
+      message: 'Player must be single character',
+      required: true
+    },
+    player2: {
+      pattern: /^\S$/,
+      message: 'Player must be single character',
+      required: true
+    }
+  }
+}
+prompt.get(playerSchema, (err, results) => {
   let game = new TicTacToe(results.player1, results.player2);
   game.showBoard();
-  let player = game.player1;
-  // while (!game.checkBoard()) {
-  // }
-  // if (game.checkBoard()) {
-  //   console.log(game.winCondition);
-  // };
   game.startMove(game.player1);
 });
-// console.log(player1);
-// game.showBoard();
-// game.startMove('o', 1, 2); // fisrt row, second square
-// if (game.checkBoard()) {
-//   game.showBoard();
-//   console.log(game.winCondition);
-// }
-// console.log(game.getMinorDiag());
